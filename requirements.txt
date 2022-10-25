@@ -1,1 +1,2 @@
 jsonschema
+pydantic>=1.10
