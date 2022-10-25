@@ -2,7 +2,7 @@
 from typing import Optional, List, Dict
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FilePath
 
 
 class ProviderChoices(str, Enum):
@@ -45,6 +45,8 @@ class Step(BaseModel):
     input_kwargs: Dict[str, 'DataType'] = Field(default_factory=dict, description='Descriptions of named arguments')
     output: 'DataType' = Field(description='Type of the data produced by the step')
 
+    # TODO (wardlt): Add a function that gathers all necessary files/creates a ZIP?
+
 
 class DataType(BaseModel):
     """Description of data type, either input or output"""
@@ -60,6 +62,7 @@ class TensorflowModelStep(Step):
     """A step which runs a TensorFlow Model"""
 
     flavor = 'tensorflow'
+    savedmodel_path: FilePath = Field(..., description='Path to the directory containing the architecture and weights')
     function_name: str = Field('DEFAULT', description='Name of the function from the model to be served')
 
 
