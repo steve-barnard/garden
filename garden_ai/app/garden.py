@@ -3,8 +3,11 @@
 import typer
 import pathlib
 from typing import List
+from rich import print
 import json
 import datetime
+
+from pathlib import Path
 
 app = typer.Typer()
 
@@ -33,9 +36,13 @@ def is_valid_directory(directory: str):
 
 @app.command()
 def create(
-    directory: str = typer.Argument(
+    directory: Path = typer.Argument(
         pathlib.Path.cwd(),  # default to current directory
         callback=is_valid_directory,
+        dir_okay=True,
+        file_okay=False,
+        writable=True,
+        readable=True
     ),
     title: str = typer.Option(
         ...,
@@ -63,6 +70,8 @@ def create(
     ),
 ):
     """Create a Garden entity."""
+
+    print(authors)
 
     return
 
