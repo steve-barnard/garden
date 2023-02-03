@@ -18,7 +18,8 @@ from globus_sdk.scopes import ScopeBuilder
 from globus_sdk.tokenstorage import SimpleJSONFileAdapter
 from pydantic import ValidationError
 
-from garden_ai.models import Garden, Pipeline
+from garden_ai.gardens import Garden
+from garden_ai.pipelines import Pipeline
 
 # garden-dev index
 GARDEN_INDEX_UUID = "58e4df29-4492-4e7d-9317-b27eba62a911"
