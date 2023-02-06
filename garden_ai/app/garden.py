@@ -2,10 +2,12 @@
 # module for the bare "garden" command
 import typer
 import pathlib
-from typing import List
+from typing import List, Optional
 from rich import print
 import json
-import datetime
+from datetime import datetime
+
+from garden_ai import Garden, GardenClient
 
 from pathlib import Path
 
@@ -17,16 +19,16 @@ def help_info():
     """
     [friendly description of the garden CLI and/or project]
 
-    maybe also some example usage?
+    maybe also some example usage? This docstring is automatically turned into --help text.
 
     if we want to add opts for "bare garden" that'd come before any subcommand,
-    here is where we'd declare them
-    e.g. `garden [opts for "garden"] create [opts for "garden create"]`
+    here is where we'd declare them e.g. `garden [opts for "garden"] create
+    [opts for "garden create"]`
     """
     pass
 
 
-def is_valid_directory(directory: str):
+def is_valid_directory(directory: Path):
     """
     validate the string optionally provided by the user as a directory for the
     garden.  should return the value if successful
@@ -42,38 +44,64 @@ def create(
         dir_okay=True,
         file_okay=False,
         writable=True,
-        readable=True
+        readable=True,
+    ),
+    authors: List[str] = typer.Option(
+        ...,
+        "-a",
+        "--author",
+        help=(
+            "Name an author of this Garden. Repeat this to indicate multiple authors: "
+            "`garden create ... --author='Mendel, Gregor' -a 'Other-Author, Anne' ...` (order is preserved)."
+        ),
+        rich_help_panel="Required",
+        prompt=False,  # NOTE: prompting won't play nice with list values
     ),
     title: str = typer.Option(
         ...,
         "-t",
         "--title",
-        prompt="Enter a title for your Garden:",
-        help="The Garden's official title (as should appear in citations)",
+        prompt="Please enter a title for your Garden:",
+        help="Provide an official title (as it should appear in citations)",
         rich_help_panel="Required",
     ),
-    authors: List[str] = typer.Option(
-        ...,
-        "-a",
-        "--authors",
-        prompt='Enter an author ("Family, Given"):',
-        help="This can be repeated for multiple authors (order is preserved).",
+    year: str = typer.Option(
+        str(datetime.now().year),  # default to current year
+        "-y",
+        "--year",
         rich_help_panel="Required",
     ),
-    description: str = typer.Option(
-        None,
+    contributors: List[str] = typer.Option(
+        [],
+        "-c",
+        "--contributor",
         help=(
-            "A brief summary of the Garden and/or its purpose, to aid "
-            "discovery by other Gardeners."
+            "Acknowledge a contributor in this Garden. Repeat to indicate multiple (like --author). "
         ),
         rich_help_panel="Recommended",
     ),
+    description: Optional[str] = typer.Option(
+        None,
+        "-d",
+        "--description",
+        help=(
+            "A brief summary of the Garden and/or its purpose, to aid discovery by other Gardeners."
+        ),
+        rich_help_panel="Recommended",
+    ),
+    # not pictured: language, tags, version
 ):
-    """Create a Garden entity."""
-
-    print(authors)
-
+    """Create a new Garden"""
+    client = GardenClient()
+    garden = client.create_garden(
+        authors=authors,
+        title=title,
+        year=year,
+        description=description or "",
+        contributors=contributors or [],
+    )
+    garden.doi = (
+        "10.26311/fake-doi"  # TODO just until doi minting via backend is demo-ready
+    )
+    client.register_metadata(garden, directory)  # writes garden.json
     return
-
-    # probably want `garden add model` to prompt with a list of known pipelines
-    # default to reading from garden.json if one is found?
