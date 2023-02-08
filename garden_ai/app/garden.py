@@ -2,9 +2,11 @@
 # module for the bare "garden" command
 import typer
 import pathlib
+import time
+import rich
 from typing import List, Optional
 from rich import print
-import json
+from rich.prompt import Prompt
 from datetime import datetime
 
 import logging
@@ -31,12 +33,19 @@ def help_info():
     pass
 
 
-def is_valid_directory(directory: Path):
+def is_valid_directory(directory: Path) -> Path:
     """
     validate the string optionally provided by the user as a directory for the
     garden.  should return the value if successful
     """
-    pass
+    return directory
+
+
+def validate_name(name: str) -> str:
+    """ """
+    return name.strip() if name else ""
+
+
 def cli_do_login_flow(self: GardenClient):
     """
     drop-in replacement for `_do_login_flow` that uses typer/click helper
@@ -79,14 +88,14 @@ GardenClient._do_login_flow = cli_do_login_flow
 def create(
     directory: Path = typer.Argument(
         pathlib.Path.cwd(),  # default to current directory
-        callback=is_valid_directory,
+        callback=is_valid_directory,  # TODO
         dir_okay=True,
         file_okay=False,
         writable=True,
         readable=True,
     ),
     authors: List[str] = typer.Option(
-        ...,
+        None,
         "-a",
         "--author",
         help=(
@@ -94,13 +103,13 @@ def create(
             "`garden create ... --author='Mendel, Gregor' -a 'Other-Author, Anne' ...` (order is preserved)."
         ),
         rich_help_panel="Required",
-        prompt=False,  # NOTE: prompting won't play nice with list values
+        prompt=False,  # NOTE: automatic prompting won't play nice with list values
     ),
     title: str = typer.Option(
         ...,
         "-t",
         "--title",
-        prompt="Please enter a title for your Garden:",
+        prompt="Please enter a title for your Garden",
         help="Provide an official title (as it should appear in citations)",
         rich_help_panel="Required",
     ),
@@ -111,7 +120,7 @@ def create(
         rich_help_panel="Required",
     ),
     contributors: List[str] = typer.Option(
-        [],
+        None,
         "-c",
         "--contributor",
         help=(
@@ -128,9 +137,51 @@ def create(
         ),
         rich_help_panel="Recommended",
     ),
-    # not pictured: language, tags, version
+    tags: List[str] = typer.Option(
+        None,
+        "--tag",
+        help="Add a tag, keyword, key phrase or other classification pertaining to the Garden.",
+        rich_help_panel="Recommended",
+    ),
 ):
     """Create a new Garden"""
+    while not authors:
+        # repeatedly prompt for at least one author until one is given
+        name = validate_name(Prompt.ask("Please enter at least one author (required)"))
+        if not name:
+            continue
+
+        authors = [name]
+        # prompt for additional authors until one is *not* given
+        while True:
+            name = validate_name(
+                Prompt.ask("Add another author? (leave blank to finish)")
+            )
+            if name:
+                authors += [name]
+            else:
+                break
+
+    if not contributors:
+        name = validate_name(
+            Prompt.ask("Acknowledge a contributor? (leave blank to skip)")
+        )
+        if name:
+            contributors = [name]
+            while True:
+                name = validate_name(
+                    Prompt.ask("Add another contributor? (leave blank to finish)")
+                )
+                if name:
+                    authors += [name]
+                else:
+                    break
+
+    if not description:
+        description = Prompt.ask(
+            "Provide a brief description of this Garden to aid in discovery (leave blank to skip)"
+        )
+
     client = GardenClient()
     garden = client.create_garden(
         authors=authors,
