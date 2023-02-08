@@ -7,9 +7,12 @@ from rich import print
 import json
 from datetime import datetime
 
-from garden_ai import Garden, GardenClient
+import logging
+from garden_ai.client import GroupsClient, SearchClient, GardenClient, AuthAPIError
 
 from pathlib import Path
+
+logger = logging.getLogger()
 
 app = typer.Typer()
 
@@ -34,6 +37,42 @@ def is_valid_directory(directory: Path):
     garden.  should return the value if successful
     """
     pass
+def cli_do_login_flow(self: GardenClient):
+    """
+    drop-in replacement for `_do_login_flow` that uses typer/click helper
+    functions to launch the globus auth url automatically, so users don't have to
+    copy a url from their terminal.
+    """
+    self.auth_client.oauth2_start_flow(
+        requested_scopes=[
+            GroupsClient.scopes.view_my_groups_and_memberships,
+            SearchClient.scopes.ingest,
+            GardenClient.scopes.action_all,  # "https://auth.globus.org/scopes/0948a6b0-a622-4078-b0a4-bfd6d77d65cf/action_all"
+        ],
+        refresh_tokens=True,
+    )
+    authorize_url = self.auth_client.oauth2_get_authorize_url()
+    print(
+        f"Authenticating with Globus in your default web browser: \n\n{authorize_url}"
+    )
+    time.sleep(3)
+    typer.launch(authorize_url)
+
+    auth_code = Prompt.ask("Please enter the code here ").strip()
+
+    try:
+        tokens = self.auth_client.oauth2_exchange_code_for_tokens(auth_code)
+        return tokens
+    except AuthAPIError:
+        logger.fatal("Invalid Globus auth token received. Exiting")
+        raise typer.Exit(code=1)
+
+
+# replace login flow method used by GardenClient:
+GardenClient._do_login_flow = cli_do_login_flow
+# ^I feel like this isn't good practice, but I'm not sure it's worth trying to
+# get the typer session/prompting behavior in the sdk client module when the
+# sdk doesn't need to know about the CLI for any other reason
 
 
 @app.command()
@@ -97,11 +136,15 @@ def create(
         authors=authors,
         title=title,
         year=year,
-        description=description or "",
-        contributors=contributors or [],
+        description=description,
+        contributors=contributors,
     )
-    garden.doi = (
-        "10.26311/fake-doi"  # TODO just until doi minting via backend is demo-ready
-    )
+    # TODO just until doi minting via backend is demo-ready
+    garden.doi = "10.26311/fake-doi"
     client.register_metadata(garden, directory)  # writes garden.json
+
+    with open(directory / "garden.json", "r") as f_in:
+        metadata = f_in.read()
+        rich.print_json(metadata)
+
     return
