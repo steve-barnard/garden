@@ -24,7 +24,7 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
         command += ["--author", name]
     for name in g.contributors:
         command += ["--contributor", name]
-    # mocker.patch("garden_ai.app.garden.input").return_value = "MyAccessToken"
+    mocker.patch("garden_ai.app.garden.typer.launch").return_value = 0
     result = runner.invoke(app, command)
     assert result.exit_code == 0
     with open(str(tmp_path / "pea_directory" / "garden.json"), "r") as f:

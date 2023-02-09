@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # module for the bare "garden" command
 import typer
 import pathlib
