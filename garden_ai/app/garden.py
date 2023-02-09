@@ -10,7 +10,12 @@ from rich.prompt import Prompt
 from datetime import datetime
 
 import logging
-from garden_ai.client import GroupsClient, SearchClient, GardenClient, AuthAPIError
+from garden_ai.client import (
+    GroupsClient,
+    SearchClient,
+    GardenClient,
+    AuthAPIError,
+)
 
 from pathlib import Path
 
@@ -63,15 +68,15 @@ def validate_name(name: str) -> str:
 
 def cli_do_login_flow(self: GardenClient):
     """
-    drop-in replacement for `_do_login_flow` that uses typer/click helper
-    functions to launch the globus auth url automatically, so users don't have to
-    copy a url from their terminal.
+    drop-in replacement for `GardenClient._do_login_flow` that uses typer/click
+    helper functions to launch the globus auth url automatically, so users don't
+    have to copy a url from their terminal.
     """
-    self.auth_client.oauth2_start_flow(
+    self.auth_client.oauth2_start_flow(  # type: ignore
         requested_scopes=[
             GroupsClient.scopes.view_my_groups_and_memberships,
             SearchClient.scopes.ingest,
-            GardenClient.scopes.action_all,  # "https://auth.globus.org/scopes/0948a6b0-a622-4078-b0a4-bfd6d77d65cf/action_all"
+            GardenClient.scopes.action_all,
         ],
         refresh_tokens=True,
     )
@@ -79,7 +84,7 @@ def cli_do_login_flow(self: GardenClient):
     print(
         f"Authenticating with Globus in your default web browser: \n\n{authorize_url}"
     )
-    time.sleep(3)
+    time.sleep(4)
     typer.launch(authorize_url)
 
     auth_code = Prompt.ask("Please enter the code here ").strip()
@@ -90,13 +95,6 @@ def cli_do_login_flow(self: GardenClient):
     except AuthAPIError:
         logger.fatal("Invalid Globus auth token received. Exiting")
         raise typer.Exit(code=1)
-
-
-# replace login flow method used by GardenClient:
-GardenClient._do_login_flow = cli_do_login_flow
-# ^I feel like this isn't good practice, but I'm not sure it's worth trying to
-# get the typer session/prompting behavior in the sdk client module when the
-# sdk doesn't need to know about the CLI for any other reason
 
 
 @app.command()
@@ -198,7 +196,14 @@ def create(
             "Provide a brief description of this Garden to aid in discovery (leave blank to skip)"
         )
 
-    client = GardenClient()
+    # somebody stop me 🐵!
+    client = GardenClient.__new__(GardenClient)
+    client._do_login_flow = cli_do_login_flow.__get__(client, type(client))  # type: ignore
+    client.__init__()  # type: ignore
+    # ^patches `client` s.t. - for this instance only! - any
+    # `self._do_login_flow` calls found in GardenClient methods will instead
+    # resolve to `cli_do_login_flow` above, not `GardenClient._do_login_flow`
+
     garden = client.create_garden(
         authors=authors,
         title=title,
