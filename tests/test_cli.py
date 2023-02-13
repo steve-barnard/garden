@@ -3,12 +3,25 @@ import json
 from typer.testing import CliRunner
 from garden_ai.app.garden import app
 from garden_ai.gardens import Garden
+from globus_sdk import OAuthTokenResponse
 
 runner = CliRunner()
 
 
 @pytest.mark.cli
-def test_garden_create(garden_all_fields, tmp_path, mocker):
+def test_garden_create(garden_all_fields, tmp_path, mocker, token):
+    # cli login flow mock
+    mock_token_response = mocker.MagicMock(OAuthTokenResponse)
+    mock_token_response.by_resource_server = {
+        "groups.api.globus.org": token,
+        "search.api.globus.org": token,
+        "0948a6b0-a622-4078-b0a4-bfd6d77d65cf": token,
+    }
+
+    mocker.patch(
+        "garden_ai.app.garden.cli_do_login_flow", return_value=mock_token_response
+    )
+
     g = garden_all_fields
     command = [
         "create",
