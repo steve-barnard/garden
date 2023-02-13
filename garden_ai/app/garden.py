@@ -18,7 +18,7 @@ app = typer.Typer()
 @app.callback()
 def help_info():
     """
-    🌱  Hello, Garden 🌱
+    🌱 Hello, Garden 🌱
 
     I'm some help text!
     """
@@ -33,7 +33,7 @@ def setup_directory(directory: Path) -> Path:
     """
     if directory.exists():
         if list(directory.iterdir()):
-            logger.fatal("Directory must be empty if it already exists.")
+            logger.fatal("Directory (default: current dir) must be empty if it already exists.")
             raise typer.Exit(code=1)
 
     (directory / "models").mkdir(parents=True)
@@ -113,6 +113,11 @@ def create(
         help="Add a tag, keyword, key phrase or other classification pertaining to the Garden.",
         rich_help_panel="Recommended",
     ),
+    verbose: bool = typer.Option(
+        False,
+        "-v",
+        "--verbose",
+    ),
 ):
     """Create a new Garden"""
     while not authors:
@@ -162,10 +167,10 @@ def create(
         contributors=contributors,
     )
 
-    client.register_metadata(garden, directory)  # writes garden.json
+    client.register_metadata(garden, directory)  # mints doi(s) and writes garden.json
 
-    with open(directory / "garden.json", "r") as f_in:
-        metadata = f_in.read()
-        rich.print_json(metadata)
-
+    if verbose:
+        with open(directory / "garden.json", "r") as f_in:
+            metadata = f_in.read()
+            rich.print_json(metadata)
     return

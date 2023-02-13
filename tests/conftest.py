@@ -46,8 +46,9 @@ def garden_client(mocker, mock_authorizer_tuple, mock_keystore, token):
         return_value="https://globus.auth.garden"
     )
     mock_auth_client.oauth2_start_flow = mocker.Mock()
-    mocker.patch("garden_ai.client.input").return_value = "my token"
-
+    # mocker.patch("garden_ai.client.input").return_value = "my token"
+    mocker.patch("garden_ai.client.Prompt.ask").return_value = "my token"
+    mocker.patch("garden_ai.client.typer.launch")
     mock_search_client = mocker.MagicMock(SearchClient)
 
     mock_token_response = mocker.MagicMock(OAuthTokenResponse)
