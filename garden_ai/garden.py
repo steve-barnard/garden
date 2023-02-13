@@ -34,6 +34,17 @@ GardenScopes = ScopeBuilder(
     "0948a6b0-a622-4078-b0a4-bfd6d77d65cf", known_url_scopes=["action_all"]
 )
 
+class IDTokenManager:
+    def __init__(self, file_name):
+        self.file_path = file_name
+
+    def set_id_token(self, token):
+        with open(self.file_path, "w") as file:
+            file.write(token)
+
+    def get_id_token(self):
+        with open(self.file_path, "r") as file:
+            return file.read()
 
 class GardenClient:
     """
@@ -58,6 +69,7 @@ class GardenClient:
         self.auth_key_store = SimpleJSONFileAdapter(
             os.path.join(key_store_path, "tokens.json")
         )
+        self.id_token_store = IDTokenManager(os.path.join(key_store_path, "id_token.txt"))
         self.client_id = os.environ.get(
             "GARDEN_CLIENT_ID", "cf9f8938-fb72-439c-a70b-85addf1b8539"
         )
@@ -78,6 +90,7 @@ class GardenClient:
     def _do_login_flow(self):
         self.auth_client.oauth2_start_flow(
             requested_scopes=[
+                AuthClient.scopes.openid,
                 GroupsClient.scopes.view_my_groups_and_memberships,
                 SearchClient.scopes.ingest,
                 GardenClient.scopes.action_all,  # "https://auth.globus.org/scopes/0948a6b0-a622-4078-b0a4-bfd6d77d65cf/action_all"
@@ -157,6 +170,8 @@ class GardenClient:
 
             # now store the tokens and pull out the Groups tokens
             self.auth_key_store.store(response)
+            id_token = response.data['id_token']
+            self.id_token_store.set_id_token(id_token)
             tokens = response.by_resource_server[GroupsClient.resource_server]
         else:
             # otherwise, we already did login; load the tokens from that file
@@ -347,3 +362,10 @@ class GardenClient:
             time.sleep(5)
             task_result = self.search_client.get_task(publish_result["task_id"])
         return task_result
+
+    def hello_mlflow(self):
+        id_token = self.id_token_store.get_id_token()
+        mlflow_url = 'https://mlflow.thegardens.ai/api/2.0/mlflow/experiments/get'
+        headers = {"Authorization": f"Bearer {id_token}"}
+        resp = requests.get(mlflow_url, headers=headers)
+        print(resp.json())
