@@ -1,18 +1,15 @@
 import pytest
-from typer.testing import CliRunner
 from garden_ai.app.garden import app
-from garden_ai.gardens import Garden
+from garden_ai.client import GardenClient
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
 
 @pytest.mark.cli
 def test_garden_create(garden_all_fields, tmp_path, mocker):
-    # patch just the create_garden method
-    mocker.patch(
-        "garden_ai.app.create.GardenClient",
-        create_garden=lambda _, **kwargs: Garden(**kwargs),
-    )
+    mock_client = mocker.MagicMock(GardenClient)
+    mocker.patch("garden_ai.app.create.GardenClient").return_value = mock_client
 
     g = garden_all_fields
     command = [
@@ -29,7 +26,7 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
         command += ["--author", name]
     for name in g.contributors:
         command += ["--contributor", name]
-    # mocker.patch("garden_ai.app.garden.typer.launch").return_value = 0
-    # mocker.patch("garden_ai.app.garden.rich.prompt.input").return_value = "MyToken"
     result = runner.invoke(app, command)
     assert result.exit_code == 0
+    mock_client.create_garden.assert_called_once()
+    mock_client.register_metadata.assert_called_once()
