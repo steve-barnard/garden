@@ -10,7 +10,7 @@ runner = CliRunner()
 def test_garden_create(garden_all_fields, tmp_path, mocker):
     # patch just the create_garden method
     mocker.patch(
-        "garden_ai.app.garden.GardenClient",
+        "garden_ai.app.create.GardenClient",
         create_garden=lambda _, **kwargs: Garden(**kwargs),
     )
 
