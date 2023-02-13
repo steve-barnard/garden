@@ -25,6 +25,7 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
     for name in g.contributors:
         command += ["--contributor", name]
     mocker.patch("garden_ai.app.garden.typer.launch").return_value = 0
+    mocker.patch("garden_ai.app.garden.rich.prompt.input").return_value = "MyToken"
     result = runner.invoke(app, command)
     if result.exception:
         raise result.exception
