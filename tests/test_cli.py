@@ -1,4 +1,5 @@
 import pytest
+import sys
 from garden_ai.app.main import app
 from garden_ai.client import GardenClient
 from typer.testing import CliRunner
@@ -7,6 +8,7 @@ runner = CliRunner()
 
 
 @pytest.mark.cli
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="can't inspect call args by name with 3.7")
 def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client = mocker.MagicMock(GardenClient)
     mocker.patch("garden_ai.app.create.GardenClient").return_value = mock_client
