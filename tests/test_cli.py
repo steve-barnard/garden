@@ -11,22 +11,25 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client = mocker.MagicMock(GardenClient)
     mocker.patch("garden_ai.app.create.GardenClient").return_value = mock_client
 
-    g = garden_all_fields
     command = [
         "create",
         str(tmp_path / "pea_directory"),
         "--title",
-        g.title,
+        garden_all_fields.title,
         "--description",
-        g.description,
+        garden_all_fields.description,
         "--year",
-        g.year,
+        garden_all_fields.year,
     ]
-    for name in g.authors:
+    for name in garden_all_fields.authors:
         command += ["--author", name]
-    for name in g.contributors:
+    for name in garden_all_fields.contributors:
         command += ["--contributor", name]
     result = runner.invoke(app, command)
     assert result.exit_code == 0
+
     mock_client.create_garden.assert_called_once()
+    kwargs = mock_client.create_garden.call_args.kwargs
+    for key in kwargs:
+        assert kwargs[key] == getattr(garden_all_fields, key)
     mock_client.register_metadata.assert_called_once()
