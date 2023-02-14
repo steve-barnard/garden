@@ -11,7 +11,8 @@ from rich.prompt import Prompt
 
 logger = logging.getLogger()
 
-app = typer.Typer()
+LOCAL_STORAGE = Path("~/.garden/db/").expanduser()
+LOCAL_STORAGE.mkdir(parents=True, exist_ok=True)
 
 
 def setup_directory(directory: Path) -> Path:
@@ -44,10 +45,8 @@ def validate_name(name: str) -> str:
     return name.strip() if name else ""
 
 
-# NOTE: `app.callback` not `app.command`
-# (app.command here would mean invoke on `garden create create`, not `garden create`)
-@app.callback()
-def create(
+# @app.callback()
+def create_garden(
     directory: Path = typer.Argument(
         pathlib.Path.cwd(),  # default to current directory
         callback=setup_directory,  # TODO
@@ -158,10 +157,10 @@ def create(
         contributors=contributors,
     )
 
-    client.register_metadata(garden, directory)  # mints doi(s) and writes garden.json
+    client.register_metadata(garden, LOCAL_STORAGE)
 
     if verbose:
-        with open(directory / "garden.json", "r") as f_in:
+        with open(LOCAL_STORAGE / f"{garden.garden_id}.json", "r") as f_in:
             metadata = f_in.read()
             rich.print_json(metadata)
     return

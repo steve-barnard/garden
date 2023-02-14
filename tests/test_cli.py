@@ -1,5 +1,5 @@
 import pytest
-from garden_ai.app.garden import app
+from garden_ai.app.main import app
 from garden_ai.client import GardenClient
 from typer.testing import CliRunner
 
