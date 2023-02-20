@@ -165,7 +165,7 @@ def create_garden(
     client.register_metadata(garden, out_dir=LOCAL_STORAGE / "gardens")
 
     if verbose:
-        with open(LOCAL_STORAGE / "gardens" / f"{garden.garden_id}.json", "r") as f_in:
+        with open(LOCAL_STORAGE / "gardens" / f"{garden.uuid}.json", "r") as f_in:
             metadata = f_in.read()
             rich.print_json(metadata)
     return

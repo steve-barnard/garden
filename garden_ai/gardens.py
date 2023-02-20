@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from typing import List, Optional, cast
 from uuid import UUID, uuid4
+import json
+
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
@@ -16,7 +18,7 @@ from .datacite import (
     Title,
     Types,
 )
-from .utils import garden_json_encoder
+from .utils import garden_json_encoder, JSON
 from .pipelines import Pipeline
 from .steps import Step
 
@@ -114,7 +116,7 @@ class Garden(BaseModel):
     tags: List[str] = Field(default_factory=list, unique_items=True)
     version: str = "0.0.1"  # TODO: enforce semver for this?
     pipelines: List[Pipeline] = Field(default_factory=list)
-    garden_id: UUID = Field(default_factory=uuid4, allow_mutation=False)
+    uuid: UUID = Field(default_factory=uuid4, allow_mutation=False)
 
     @validator("year")
     def valid_year(cls, year):
@@ -123,10 +125,16 @@ class Garden(BaseModel):
         return str(year)
 
     def json(self, **kwargs):
-        kwargs.update(encoder=garden_json_encoder)
+        def pipeline_uuid_only_encoder(obj):
+            if isinstance(obj, Pipeline):
+                return json.dumps({"uuid": f"{obj.uuid}", "doi": f"{obj.doi}"})
+            else:
+                return garden_json_encoder(obj)
+
+        kwargs.update(encoder=pipeline_uuid_only_encoder)
         return super().json(**kwargs)
 
-    def datacite_json(self) -> str:
+    def datacite_json(self) -> JSON:
         """Parse this `Garden`s metadata into a DataCite-schema-compliant JSON string.
 
         Leverages a pydantic class `DataCiteSchema`, which was automatically generated from:
