@@ -4,8 +4,6 @@ import logging
 from datetime import datetime
 from typing import List, Optional, cast
 from uuid import UUID, uuid4
-import json
-
 
 from pydantic import BaseModel, Field, ValidationError, validator
 
@@ -18,9 +16,9 @@ from .datacite import (
     Title,
     Types,
 )
-from .utils import garden_json_encoder, JSON
 from .pipelines import Pipeline
 from .steps import Step
+from .utils import JSON, garden_json_encoder
 
 logger = logging.getLogger()
 
@@ -125,13 +123,13 @@ class Garden(BaseModel):
         return str(year)
 
     def json(self, **kwargs):
-        def pipeline_uuid_only_encoder(obj):
+        def pipeline_id_only_encoder(obj):
             if isinstance(obj, Pipeline):
-                return json.dumps({"uuid": f"{obj.uuid}", "doi": f"{obj.doi}"})
+                return {"uuid": str(obj.uuid), "doi": obj.doi}
             else:
                 return garden_json_encoder(obj)
 
-        kwargs.update(encoder=pipeline_uuid_only_encoder)
+        kwargs.update(encoder=pipeline_id_only_encoder)
         return super().json(**kwargs)
 
     def datacite_json(self) -> JSON:

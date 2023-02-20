@@ -3,13 +3,11 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import List, Union, Dict
-
-from rich import print
-from rich.prompt import Prompt
-import typer
+from typing import Dict, List, Union
+from uuid import UUID
 
 import requests
+import typer
 from globus_sdk import (
     AuthAPIError,
     AuthClient,
@@ -21,6 +19,8 @@ from globus_sdk import (
 from globus_sdk.scopes import ScopeBuilder
 from globus_sdk.tokenstorage import SimpleJSONFileAdapter
 from pydantic import ValidationError
+from rich import print
+from rich.prompt import Prompt
 
 from garden_ai.gardens import Garden
 from garden_ai.pipelines import Pipeline
@@ -341,7 +341,7 @@ class GardenClient:
             with open(out_dir / f"{garden.uuid}.json", "w+") as f:
                 f.write(garden.json())
 
-    def get_local(self, uuid: str) -> JSON:
+    def get_local(self, uuid: UUID) -> JSON:
         """Helper: fetch a record from 'local database'
 
         Find entry with key matching ``uuid`` and return the associated metadata
@@ -349,23 +349,23 @@ class GardenClient:
 
         Parameters
         ----------
-        uuid : str
-            The uuid corresponding to the desired Garden or Pipeline
+        uuid : UUID
+            The uuid corresponding to the desired Garden or Pipeline.
 
         Returns
         -------
         JSON
             JSON string corresponding to the metadata of the object with the given uuid.
         """
-        with open(LOCAL_STORAGE / "data.json", "r") as f:
+        with open(LOCAL_STORAGE / "data.json", "r+") as f:
             raw_contents = f.read()
             if raw_contents:
-                data: Dict[str, Dict] = json.load(f)
+                data: Dict[str, Dict] = json.loads(raw_contents)
             else:
                 logger.error("Local storage is empty; could not find by uuid.")
                 raise KeyError
         try:
-            result = data[uuid]
+            result = data[str(uuid)]
         except KeyError:
             logger.error(f"No local entry found with uuid: {uuid}.")
             raise
@@ -385,17 +385,23 @@ class GardenClient:
             a TypeError will be raised if not a Garden or Pipeline.
 
         """
-        with open(LOCAL_STORAGE / "data.json", "r") as f:
-            raw_contents = f.read()
-            if raw_contents:
-                data: Dict[str, Dict] = json.load(f)
-            else:
-                data = {}
-        if isinstance(obj, (Garden, Pipeline)):
-            key, val = obj.uuid, obj.json()
-            data[key] = json.loads(val)
-        else:
+        data = {}
+        # read existing entries into memory, if any
+        if (LOCAL_STORAGE / "data.json").exists():
+            with open(LOCAL_STORAGE / "data.json", "r+") as f:
+                raw_data = f.read()
+                if raw_data:
+                    data = json.loads(raw_data)
+
+        if not isinstance(obj, (Garden, Pipeline)):
             raise TypeError(f"Expected Garden or Pipeline object, got: {type(obj)}.")
+
+        with open(LOCAL_STORAGE / "data.json", "w+") as f:
+            key, val = str(obj.uuid), obj.json()
+            data[key] = json.loads(val)
+            contents = json.dumps(data)
+            f.write(contents)
+        return
 
     def publish_garden(self, garden=None, visibility="Public"):
         # Takes a garden_id UUID as a subject, and a garden_doc dict, and

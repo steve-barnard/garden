@@ -5,7 +5,7 @@ from typing import List, Optional
 
 import rich
 import typer
-from garden_ai.client import GardenClient
+from garden_ai.client import GardenClient, LOCAL_STORAGE
 from rich.prompt import Prompt
 
 logger = logging.getLogger()

@@ -132,6 +132,7 @@ def test_local_storage_pipeline(mocker, garden_client, pipeline_toy_example, tmp
 
 def test_local_storage_keyerror(mocker, garden_client, garden_all_fields, tmp_path):
     # mock to replace "~/.garden/db"
+    tmp_path.mkdir(parents=True, exist_ok=True)
     mocker.patch("garden_ai.client.LOCAL_STORAGE", new=tmp_path)
     pipeline, *_ = garden_all_fields.pipelines
     # put the pipeline, not garden (hence db is nonempty)
