@@ -363,7 +363,7 @@ class GardenClient:
                 data: Dict[str, Dict] = json.load(f)
             else:
                 logger.error("Local storage is empty; could not find by uuid.")
-                return
+                raise KeyError
         try:
             result = data[uuid]
         except KeyError:

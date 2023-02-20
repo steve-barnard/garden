@@ -10,10 +10,6 @@ from rich.prompt import Prompt
 
 logger = logging.getLogger()
 
-LOCAL_STORAGE = Path("~/.garden/db/").expanduser()
-(LOCAL_STORAGE / "gardens").mkdir(parents=True, exist_ok=True)
-(LOCAL_STORAGE / "pipelines").mkdir(parents=True, exist_ok=True)
-
 
 def setup_directory(directory: Optional[Path]) -> Optional[Path]:
     """
