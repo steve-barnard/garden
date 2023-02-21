@@ -5,11 +5,11 @@ from itertools import zip_longest
 import beartype.door
 import requests
 import sys
-
+from typing_extensions import TypeAlias
 if sys.version_info < (3, 9):
     from typing_extensions import TypeAlias, get_args, get_origin
 else:
-    from beartype.typing import TypeAlias, get_args, get_origin
+    from beartype.typing import get_args, get_origin
 from pydantic.json import pydantic_encoder
 
 JSON: TypeAlias = str
