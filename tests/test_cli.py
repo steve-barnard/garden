@@ -2,9 +2,11 @@ import pytest
 import sys
 from garden_ai.app.main import app
 from garden_ai.client import GardenClient
+from garden_ai.pipelines import Pipeline
 from typer.testing import CliRunner
 import string
 import random
+from keyword import iskeyword
 from garden_ai.app.pipeline import validate_identifier
 
 runner = CliRunner()
@@ -43,13 +45,36 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client.put_local.assert_called_once()
 
 
-def test_pipeline_create(tmp_path, mocker):
+def test_pipeline_create(pipeline_toy_example, mocker):
     mock_client = mocker.MagicMock(GardenClient)
     mocker.patch("garden_ai.app.pipeline.GardenClient").return_value = mock_client
-    # TODO
+    command = [
+        "pipeline",
+        "create",
+        "--title",
+        pipeline_toy_example.title,
+        "--description",
+        pipeline_toy_example.description,
+        "--year",
+        pipeline_toy_example.year,
+    ]
+    for name in pipeline_toy_example.authors:
+        command += ["--author", name]
+    for name in pipeline_toy_example.contributors:
+        command += ["--contributor", name]
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0
+
+    kwargs = mock_client.create_pipeline.call_args.kwargs
+    del kwargs["steps"]  # different steps on purpose -- can't get a function from cli
+    for key in kwargs:
+        assert kwargs[key] == getattr(pipeline_toy_example, key)
+
+    mock_client.put_local.assert_called_once()
 
 
 def test_validate_identifier():
     possible_name = "".join(random.choices(string.printable, k=50))
     valid_name = validate_identifier(possible_name)
     assert valid_name.isidentifier()
+    assert not iskeyword(validate_identifier("import"))

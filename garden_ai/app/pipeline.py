@@ -51,6 +51,7 @@ def validate_name(name: str) -> str:
     """(this will probably eventually use some 3rd party name parsing library)"""
     return name.strip() if name else ""
 
+
 @pipeline_app.callback()
 def pipeline():
     """
@@ -167,7 +168,7 @@ def create(
         """description of a dumb step"""
         return arg
 
-    pipeline = Pipeline(
+    pipeline = client.create_pipeline(
         title=title,
         authors=authors,
         contributors=contributors,
@@ -183,4 +184,4 @@ def create(
         metadata = client.get_local(pipeline.uuid)
         rich.print_json(metadata)
 
-    return 0
+    return
