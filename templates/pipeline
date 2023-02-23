@@ -1,4 +1,4 @@
-## THIS FILE WAS AUTOMATICALLY GENERATED {{  }} ##
+## THIS FILE WAS AUTOMATICALLY GENERATED ##
 from garden_ai import Pipeline, step
 from garden_ai.steps import inference_step
 import typing
@@ -37,14 +37,33 @@ def another_step(data: object) -> object:
 
 # specialized model-specific decorator:
 # pulls a model from the garden mlflow instance and run inference
-@inference_step(model_id=...)
+@inference_step(model_id=..., version=...)
 def run_inference(arg: object, model: object) -> object:
     pass
 
-# steps will be composed in order
+# steps will be composed in order by the pipeline below
 ALL_STEPS = (
     preprocessing_step,
     another_step,
     run_inference,
 )
+
 ################################### PIPELINE ####################################
+
+{{ shortname }} = Pipeline(
+    title={{ pipeline.title }},
+    steps=ALL_STEPS,
+    authors={{ pipeline.authors }},
+    contributors={{ pipeline.contributors }},
+    description= {{ pipeline.description }},
+    version={{ pipeline.version }},
+    year={{ pipeline.year }},
+    tags= {{ pipeline.tags }},
+    uuid={{ pipeline.uuid }},  # WARNING: DO NOT EDIT UUID
+)
+
+# run this file as a script to sync local storage
+if __name__ == "__main__":
+    from garden_ai import GardenClient
+    gc = GardenClient()
+    gc.put_local({{ shortname }})
