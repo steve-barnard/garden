@@ -13,7 +13,7 @@ runner = CliRunner()
 
 @pytest.mark.cli
 @pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="mocked call_args.kwargs breaks under 3.7"
+    sys.version_info < (3, 8), reason="mocked call_args.kwargs breaks pre-3.8"
 )
 def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client = mocker.MagicMock(GardenClient)
@@ -44,6 +44,9 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client.put_local.assert_called_once()
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="mocked call_args.kwargs breaks pre-3.8"
+)
 def test_pipeline_create(pipeline_toy_example, mocker, tmp_path):
     mock_client = mocker.MagicMock(GardenClient)
     mocker.patch("garden_ai.app.pipeline.GardenClient").return_value = mock_client
