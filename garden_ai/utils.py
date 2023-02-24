@@ -6,8 +6,9 @@ import beartype.door
 import requests
 import sys
 from typing_extensions import TypeAlias
+
 if sys.version_info < (3, 9):
-    from typing_extensions import TypeAlias, get_args, get_origin
+    from typing_extensions import get_args, get_origin
 else:
     from beartype.typing import get_args, get_origin
 from pydantic.json import pydantic_encoder
@@ -84,7 +85,6 @@ def safe_compose(f, g):
         # case 2: return is a single value; verify that it's the only one
         # expected by f.
         if issubtype(g_out, f_in[0]):
-
             # note that we do NOT unpack g's output
             def f_of_g(*args, **kwargs):
                 return f(g(*args, **kwargs))

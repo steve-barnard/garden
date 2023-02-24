@@ -2,7 +2,6 @@ import pytest
 import sys
 from garden_ai.app.main import app
 from garden_ai.client import GardenClient
-from garden_ai.pipelines import Pipeline
 from typer.testing import CliRunner
 import string
 import random
