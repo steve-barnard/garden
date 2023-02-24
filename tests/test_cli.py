@@ -44,12 +44,14 @@ def test_garden_create(garden_all_fields, tmp_path, mocker):
     mock_client.put_local.assert_called_once()
 
 
-def test_pipeline_create(pipeline_toy_example, mocker):
+def test_pipeline_create(pipeline_toy_example, mocker, tmp_path):
     mock_client = mocker.MagicMock(GardenClient)
     mocker.patch("garden_ai.app.pipeline.GardenClient").return_value = mock_client
     command = [
         "pipeline",
         "create",
+        "--directory",
+        str(tmp_path),
         "--title",
         pipeline_toy_example.title,
         "--description",
