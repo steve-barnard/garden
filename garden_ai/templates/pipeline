@@ -50,15 +50,15 @@ ALL_STEPS = (
 ################################### PIPELINE ####################################
 
 {{ shortname }} = Pipeline(
-    title={{ pipeline.title }},
+    title="{{ pipeline.title }}",
     steps=ALL_STEPS,
     authors={{ pipeline.authors }},
     contributors={{ pipeline.contributors }},
-    description= {{ pipeline.description }},
-    version={{ pipeline.version }},
+    description="{{ pipeline.description }}",
+    version="{{ pipeline.version }}",
     year={{ pipeline.year }},
     tags= {{ pipeline.tags }},
-    uuid={{ pipeline.uuid }},  # WARNING: DO NOT EDIT UUID
+    uuid="{{ pipeline.uuid }}",  # WARNING: DO NOT EDIT UUID
 )
 
 # run this file as a script to sync local storage

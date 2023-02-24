@@ -5,6 +5,7 @@ description = "Garden: tools to simplify access to scientific AI advances."
 authors = ["Your Name <you@example.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+include = ["templates"]
 
 [tool.poetry.dependencies]
 python = "^3.7"

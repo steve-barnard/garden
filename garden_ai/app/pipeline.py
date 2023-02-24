@@ -193,11 +193,11 @@ def create(
         raise typer.Exit(code=1)
     else:
         out_dir.mkdir(parents=True)
-        out_file = out_dir / f"{shortname}.py"
+        out_file = out_dir / f"pipeline.py"
         contents = template_pipeline(shortname, pipeline)
         with open(out_file, "w") as f:
             f.write(contents)
-        print(f"Wrote to {out_file}.n")
+        print(f"Wrote to {out_file}.")
 
     client.put_local(pipeline)
     if verbose:
