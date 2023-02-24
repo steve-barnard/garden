@@ -11,14 +11,13 @@ Brief notes on steps (see docs for more detail):
     - the callable MUST have valid type-hints for all arguments and return type.
     - these type-hints are used to verify that the steps can be composed in a pipeline.
     - steps also extract metadata from the callable, like `description` or
-        `output_info` from the callable's docstring or return-type annotation,
+        `output_info` from the callable's docstring or return annotation,
         respectively.
     - "specialized steps" like `@run_inference` are the best way to fetch a model
         from our model registry for use in a pipeline.
     - don't use `Any` or `None` in step annotations. If a step is indeed general enough to
         accept or return any python object, prefer `object` as the annotation.
 """
-
 
 # example step using the decorator:
 @step
