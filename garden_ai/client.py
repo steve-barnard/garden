@@ -24,12 +24,17 @@ from pydantic import ValidationError
 
 from garden_ai.gardens import Garden
 from garden_ai.pipelines import Pipeline
+from garden_ai.mlmodel import upload_model, ModelUploadException
 
 # garden-dev index
 GARDEN_INDEX_UUID = "58e4df29-4492-4e7d-9317-b27eba62a911"
 
 logger = logging.getLogger()
 
+BACKEND_URL = endpoint = os.environ.get(
+    "GARDEN_ENDPOINT",
+    "https://nu3cetwc84.execute-api.us-east-1.amazonaws.com/garden_prod",
+)
 
 class AuthException(Exception):
     pass
@@ -334,6 +339,22 @@ class GardenClient:
         else:
             with open(out_dir / f"{garden.garden_id}.json", "w+") as f:
                 f.write(garden.json())
+
+    def log_model(self, model_path: str, model_name: str, extra_pip_requirements: list[str] = None) -> str:
+        # TODO: put the env var stuff in some global initialization or make an ML Flow context manager
+        _existing_mlflow_token = os.environ.get('MLFLOW_TRACKING_TOKEN')
+        _existing_mlflow_uri = os.environ.get('MLFLOW_TRACKING_URI')
+        os.environ['MLFLOW_TRACKING_TOKEN'] = self.garden_authorizer.access_token
+        os.environ['MLFLOW_TRACKING_URI'] = BACKEND_URL + '/mlflow'
+        # TODO: mechanism to get user's email address
+        email = "willengler@uchicago.edu"
+        try:
+            print(upload_model(model_path, model_name, email, extra_pip_requirements=extra_pip_requirements))
+        except ModelUploadException as e:
+            print(e)
+        finally:
+            del os.environ['MLFLOW_TRACKING_TOKEN']  # = _existing_mlflow_token
+            del os.environ['MLFLOW_TRACKING_URI']  # = _existing_mlflow_uri
 
     def publish_garden(self, garden=None, visibility="Public"):
         # Takes a garden_id UUID as a subject, and a garden_doc dict, and
